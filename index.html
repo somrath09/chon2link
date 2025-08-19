@@ -10,8 +10,8 @@
     <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans Thai', sans-serif; background-color: #f8f9fa; }
-        .navbar { background-color: #002654; } /* น้ำเงิน */
-        .btn-primary { background-color: #C8102E; border-color: #C8102E; } /* แดง */
+        .navbar { background-color: #002654; }
+        .btn-primary { background-color: #C8102E; border-color: #C8102E; }
         .btn-primary:hover { animation: pulse 0.5s; }
         .footer { background-color: #002654; color: white; padding: 10px; text-align: center; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
@@ -70,7 +70,6 @@
         © 2025 สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2 | พัฒนาโดยทีม ICT สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2
     </footer>
 
-    <!-- Modal สำหรับแสดงเกียรติบัตร -->
     <div class="modal fade" id="certModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -131,67 +130,79 @@
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, widthPx, heightPx);
 
-            // ลายน้ำธงชาติไทย
-            const flag = new Image();
-            flag.crossOrigin = 'anonymous';
-            await new Promise((resolve) => { flag.onload = resolve; flag.src = flagUrl; });
-            const flagSize = Math.min(widthPx * 0.5, heightPx * 0.5);
-            const flagX = (widthPx - flagSize) / 2;
-            const flagY = (heightPx - flagSize) / 2;
-            ctx.globalAlpha = 0.1;
-            ctx.drawImage(flag, flagX, flagY, flagSize, flagSize * (flag.height / flag.width));
-            ctx.globalAlpha = 1;
+            try {
+                const flag = new Image();
+                flag.crossOrigin = 'anonymous';
+                await new Promise((resolve, reject) => { 
+                    flag.onload = resolve; 
+                    flag.onerror = () => reject(new Error('Failed to load flag image')); 
+                    flag.src = flagUrl; 
+                });
+                const flagSize = Math.min(widthPx * 0.5, heightPx * 0.5);
+                const flagX = (widthPx - flagSize) / 2;
+                const flagY = (heightPx - flagSize) / 2;
+                ctx.globalAlpha = 0.1;
+                ctx.drawImage(flag, flagX, flagY, flagSize, flagSize * (flag.height / flag.width));
+                ctx.globalAlpha = 1;
 
-            // กรอบสวยงาม (แดงและน้ำเงิน)
-            ctx.strokeStyle = '#C8102E';
-            ctx.lineWidth = 20;
-            ctx.strokeRect(20, 20, widthPx - 40, heightPx - 40);
-            ctx.strokeStyle = '#002654';
-            ctx.lineWidth = 10;
-            ctx.strokeRect(40, 40, widthPx - 80, heightPx - 80);
+                ctx.strokeStyle = '#C8102E';
+                ctx.lineWidth = 20;
+                ctx.strokeRect(20, 20, widthPx - 40, heightPx - 40);
+                ctx.strokeStyle = '#002654';
+                ctx.lineWidth = 10;
+                ctx.strokeRect(40, 40, widthPx - 80, heightPx - 80);
 
-            // โลโก้
-            const logoSize = 400;
-            const logoImg1 = new Image();
-            logoImg1.crossOrigin = 'anonymous';
-            await new Promise((resolve) => { logoImg1.onload = resolve; logoImg1.src = logo1; });
-            ctx.drawImage(logoImg1, (widthPx - logoSize) / 2, 100, logoSize, logoSize * (logoImg1.height / logoImg1.width));
-            const logoImg2 = new Image();
-            logoImg2.crossOrigin = 'anonymous';
-            await new Promise((resolve) => { logoImg2.onload = resolve; logoImg2.src = logo2; });
-            ctx.drawImage(logoImg2, (widthPx - logoSize) / 2, heightPx - 600, logoSize, logoSize * (logoImg2.height / logoImg2.width));
+                const logoSize = 400;
+                const logoImg1 = new Image();
+                logoImg1.crossOrigin = 'anonymous';
+                await new Promise((resolve, reject) => { 
+                    logoImg1.onload = resolve; 
+                    logoImg1.onerror = () => reject(new Error('Failed to load logo1')); 
+                    logoImg1.src = logo1; 
+                });
+                ctx.drawImage(logoImg1, (widthPx - logoSize) / 2, 100, logoSize, logoSize * (logoImg1.height / logoImg1.width));
+                const logoImg2 = new Image();
+                logoImg2.crossOrigin = 'anonymous';
+                await new Promise((resolve, reject) => { 
+                    logoImg2.onload = resolve; 
+                    logoImg2.onerror = () => reject(new Error('Failed to load logo2')); 
+                    logoImg2.src = logo2; 
+                });
+                ctx.drawImage(logoImg2, (widthPx - logoSize) / 2, heightPx - 600, logoSize, logoSize * (logoImg2.height / logoImg2.width));
 
-            // ข้อความ
-            ctx.fillStyle = '#000000';
-            ctx.textAlign = 'center';
-            let y = 100 + logoSize + 100;
-            ctx.font = 'bold 60px Noto Sans Thai';
-            ctx.fillText('สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2', widthPx / 2, y);
-            y += 80;
-            ctx.fillText('ขอมอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า', widthPx / 2, y);
-            y += 80;
-            ctx.font = 'bold 70px Noto Sans Thai';
-            ctx.fillText(school, widthPx / 2, y);
-            y += 80;
-            ctx.font = '50px Noto Sans Thai';
-            ctx.fillText('ได้แสดงความจงรักภักดีต่อสถาบันหลักของชาติ ความสามัคคีเป็นหนึ่งเดียวของคนไทย', widthPx / 2, y);
-            y += 60;
-            ctx.fillText('และเป็นกำลังใจสำคัญแก่เหล่าทหารกล้า', widthPx / 2, y);
-            y += 60;
-            ctx.fillText('ขออำนวยพรให้ประสบความสุข ความเจริญก้าวหน้าตลอดไป', widthPx / 2, y);
-            y += 80;
-            ctx.font = '40px Noto Sans Thai';
-            ctx.fillText(`ให้ไว้ ณ วันที่ ${dateStr}`, widthPx / 2, y);
-            y = heightPx - 600 + logoSize + 50;
-            ctx.font = '50px Noto Sans Thai';
-            ctx.fillText('(นายวันชัย หวังสวาสดิ์)', widthPx / 2, y);
-            y += 60;
-            ctx.fillText('ผู้อำนวยการสำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2', widthPx / 2, y);
+                ctx.fillStyle = '#000000';
+                ctx.textAlign = 'center';
+                let y = 100 + logoSize + 100;
+                ctx.font = 'bold 60px Noto Sans Thai';
+                ctx.fillText('สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2', widthPx / 2, y);
+                y += 80;
+                ctx.fillText('ขอมอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า', widthPx / 2, y);
+                y += 80;
+                ctx.font = 'bold 70px Noto Sans Thai';
+                ctx.fillText(school, widthPx / 2, y);
+                y += 80;
+                ctx.font = '50px Noto Sans Thai';
+                ctx.fillText('ได้แสดงความจงรักภักดีต่อสถาบันหลักของชาติ ความสามัคคีเป็นหนึ่งเดียวของคนไทย', widthPx / 2, y);
+                y += 60;
+                ctx.fillText('และเป็นกำลังใจสำคัญแก่เหล่าทหารกล้า', widthPx / 2, y);
+                y += 60;
+                ctx.fillText('ขออำนวยพรให้ประสบความสุข ความเจริญก้าวหน้าตลอดไป', widthPx / 2, y);
+                y += 80;
+                ctx.font = '40px Noto Sans Thai';
+                ctx.fillText(`ให้ไว้ ณ วันที่ ${dateStr}`, widthPx / 2, y);
+                y = heightPx - 600 + logoSize + 50;
+                ctx.font = '50px Noto Sans Thai';
+                ctx.fillText('(นายวันชัย หวังสวาสดิ์)', widthPx / 2, y);
+                y += 60;
+                ctx.fillText('ผู้อำนวยการสำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2', widthPx / 2, y);
 
-            // เปิดใช้งานปุ่มดาวน์โหลดหลังจากพร้อม
-            document.getElementById('downloadPng').disabled = false;
-            document.getElementById('downloadJpg').disabled = false;
-            document.getElementById('downloadPdf').disabled = false;
+                document.getElementById('downloadPng').disabled = false;
+                document.getElementById('downloadJpg').disabled = false;
+                document.getElementById('downloadPdf').disabled = false;
+            } catch (e) {
+                console.error('Error generating certificate:', e);
+                throw e;
+            }
         }
 
         function downloadBlob(blob, filename) {
@@ -224,21 +235,32 @@
         });
 
         async function loadTable() {
-            const response = await fetch(scriptUrl);
-            const data = await response.json();
-            $('#schoolTable').DataTable({
-                data: data,
-                columns: [
-                    { data: null, render: (data, type, row, meta) => meta.row + 1 },
-                    { data: 1 }, // โรงเรียน
-                    { data: 5, render: (d) => `<a href="${d}" target="_blank">ดูคลิป</a>` }, // URL
-                    { data: null, render: (d, t, row) => `<button class="btn btn-sm btn-info" onclick="showPastCert('${row[1]}', '${row[0]}')">ดู</button>` }
-                ],
-                language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/th.json' },
-                pageLength: 10,
-                order: [], // ไม่เรียงเพิ่ม เพราะข้อมูลเรียงล่าสุดมาก่อนแล้ว
-                destroy: true
-            });
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit'
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                console.log('Table data:', data); // Debug
+                $('#schoolTable').DataTable({
+                    data: data,
+                    columns: [
+                        { data: null, render: (data, type, row, meta) => meta.row + 1 },
+                        { data: 1 },
+                        { data: 5, render: (d) => `<a href="${d}" target="_blank">ดูคลิป</a>` },
+                        { data: null, render: (d, t, row) => `<button class="btn btn-sm btn-info" onclick="showPastCert('${row[1]}', '${row[0]}')">ดู</button>` }
+                    ],
+                    language: { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/th.json' },
+                    pageLength: 10,
+                    order: [],
+                    destroy: true
+                });
+            } catch (err) {
+                console.error('Error loading table:', err);
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลตารางได้: ' + err.message, 'error');
+            }
         }
         loadTable();
 
@@ -252,7 +274,7 @@
                 await generateCert(school, timestamp);
                 document.getElementById('loading').style.display = 'none';
             } catch (e) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างเกียรติบัตรได้', 'error');
+                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างเกียรติบัตรได้: ' + e.message, 'error');
                 document.getElementById('loading').style.display = 'none';
             }
         };
@@ -269,12 +291,16 @@
                 const res = await fetch(scriptUrl, {
                     method: 'POST',
                     body: JSON.stringify(data),
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'cors',
+                    credentials: 'omit'
                 });
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const result = await res.json();
+                console.log('Submit response:', result); // Debug
                 if (result.status === 'success') {
                     Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อย', 'success');
-                    loadTable(); // โหลดตารางใหม่
+                    loadTable();
                     document.getElementById('loading').style.display = 'block';
                     document.getElementById('downloadPng').disabled = true;
                     document.getElementById('downloadJpg').disabled = true;
@@ -286,7 +312,8 @@
                     Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการบันทึก', 'error');
                 }
             } catch (err) {
-                Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error');
+                console.error('Error submitting form:', err);
+                Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message, 'error');
             }
         });
     </script>
