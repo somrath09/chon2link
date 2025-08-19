@@ -241,9 +241,10 @@
                     mode: 'cors',
                     credentials: 'omit'
                 });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
                 const data = await response.json();
-                console.log('Table data:', data); // Debug
+                console.log('Table data:', data);
+                if (data.status === 'error') throw new Error(data.message);
                 $('#schoolTable').DataTable({
                     data: data,
                     columns: [
@@ -259,7 +260,7 @@
                 });
             } catch (err) {
                 console.error('Error loading table:', err);
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลตารางได้: ' + err.message, 'error');
+                Swal.fire('ข้อผิดพลาด', `ไม่สามารถโหลดข้อมูลตารางได้: ${err.message}`, 'error');
             }
         }
         loadTable();
@@ -274,7 +275,7 @@
                 await generateCert(school, timestamp);
                 document.getElementById('loading').style.display = 'none';
             } catch (e) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างเกียรติบัตรได้: ' + e.message, 'error');
+                Swal.fire('ข้อผิดพลาด', `ไม่สามารถสร้างเกียรติบัตรได้: ${e.message}`, 'error');
                 document.getElementById('loading').style.display = 'none';
             }
         };
@@ -295,9 +296,9 @@
                     mode: 'cors',
                     credentials: 'omit'
                 });
-                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status} ${res.statusText}`);
                 const result = await res.json();
-                console.log('Submit response:', result); // Debug
+                console.log('Submit response:', result);
                 if (result.status === 'success') {
                     Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อย', 'success');
                     loadTable();
@@ -309,11 +310,11 @@
                     await generateCert(school);
                     document.getElementById('loading').style.display = 'none';
                 } else {
-                    Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการบันทึก', 'error');
+                    throw new Error(result.message || 'Unknown error');
                 }
             } catch (err) {
                 console.error('Error submitting form:', err);
-                Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + err.message, 'error');
+                Swal.fire('ข้อผิดพลาด', `เกิดข้อผิดพลาดในการเชื่อมต่อ: ${err.message}`, 'error');
             }
         });
     </script>
