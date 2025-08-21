@@ -3,347 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดส่งลิงก์คลิปวิดีโอ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+    <title>ระบบจัดส่งคลิปและออกเกียรติบัตรออนไลน์</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Font: Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
+    
+    <!-- DataTables JS -->
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.js"></script>
+
     <style>
         body {
-            font-family: 'Noto Sans Thai', sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Sarabun', sans-serif;
         }
-        .primary-color { color: #002654; } /* น้ำเงิน */
-        .secondary-color { color: #c8102e; } /* แดง */
-        .btn-primary {
-            background-color: #002654;
-            border-color: #002654;
-            transition: background-color 0.3s ease;
+        /* Loading Overlay Styles */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
         }
-        .btn-primary:hover {
-            background-color: #001a3a;
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #4f46e5; /* Changed loader color to match theme */
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
         }
-        .form-control:focus {
-            border-color: #c8102e;
-            box-shadow: 0 0 0 0.25rem rgba(200, 16, 46, 0.25);
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        .modal-content {
-            border-radius: 15px;
-        }
-        footer {
-            background-color: #002654;
-            color: white;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
-<body>
-    <div class="container my-5">
-        <h1 class="text-center primary-color mb-4" data-aos="fade-down">ระบบจัดส่งลิงก์คลิปวิดีโอ</h1>
-        
-        <form id="submitForm" data-aos="fade-up">
-            <div class="mb-3">
-                <label for="school" class="form-label">โรงเรียน</label>
-                <input type="text" class="form-control" id="school" required>
-            </div>
-            <div class="mb-3">
-                <label for="name" class="form-label">ชื่อ-สกุล</label>
-                <input type="text" class="form-control" id="name" required>
-            </div>
-            <div class="mb-3">
-                <label for="position" class="form-label">ตำแหน่ง</label>
-                <input type="text" class="form-control" id="position" required>
-            </div>
-            <div class="mb-3">
-                <label for="phone" class="form-label">เบอร์โทรศัพท์</label>
-                <input type="tel" class="form-control" id="phone" required>
-            </div>
-            <div class="mb-3">
-                <label for="url" class="form-label">URL</label>
-                <input type="url" class="form-control" id="url" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100 animate__animated">บันทึก</button>
-        </form>
-        
-        <div class="mt-5" data-aos="fade-up">
-            <h2 class="primary-color">รายชื่อโรงเรียนที่จัดส่งล่าสุด</h2>
-            <table id="recentTable" class="table table-striped table-bordered">
-                <thead>
-                    <tr>
-                        <th>ลำดับ</th>
-                        <th>โรงเรียน</th>
-                        <th>คลิปวิดีโอที่จัดส่ง</th>
-                        <th>ดูเกียรติบัตรย้อนหลัง</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+<body class="bg-gray-50">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden flex items-center justify-center">
+        <div class="text-center text-white">
+            <div class="loader mx-auto mb-4"></div>
+            <p class="text-lg">กำลังประมวลผล โปรดรอสักครู่...</p>
         </div>
     </div>
 
-    <!-- Modal สำหรับแสดงเกียรติบัตร -->
-    <div class="modal fade" id="certModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">เกียรติบัตร</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-purple-600 to-blue-600 shadow-md rounded-lg p-6 mb-8 text-center text-white">
+            <!-- Added Logo -->
+            <img src="https://lh3.googleusercontent.com/d/1reqwwQP7acieFotjwOkM4qYIg9w1A3rf" alt="Logo" class="h-20 mx-auto mb-4">
+            <h1 class="text-xl md:text-3xl font-bold">
+                ระบบจัดส่งคลิปวิดีโอและออกเกียรติบัตรออนไลน์
+            </h1>
+            <p class="text-md md:text-lg mt-2 opacity-90">สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2</p>
+        </header>
+
+        <!-- Form Submission Section -->
+        <section id="form-section" class="bg-white shadow-md rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">จัดส่งคลิปวิดีโอเพื่อรับเกียรติบัตร</h2>
+            <form id="certificate-form">
+                <div class="mb-4">
+                    <label for="schoolName" class="block text-gray-700 text-sm font-bold mb-2">ชื่อโรงเรียน:</label>
+                    <input type="text" id="schoolName" name="schoolName" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
-                <div class="modal-body text-center">
-                    <div id="loading" class="alert alert-info" style="display: none;">กำลังประมวลผลเกียรติบัตร กรุณารอสักครู่...</div>
-                    <canvas id="certCanvas" style="width: 100%; height: auto; border: 1px solid #ddd;"></canvas>
+                <div class="mb-6">
+                    <label for="videoUrl" class="block text-gray-700 text-sm font-bold mb-2">อัปโหลดคลิปวิดีโอ (URL):</label>
+                    <input type="text" id="videoUrl" name="videoUrl" placeholder="วางลิงก์วิดีโอที่นี่" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <p class="text-xs text-gray-500 mt-2">รองรับ: YouTube, Facebook, Google Drive, Vimeo และแพลตฟอร์มอื่นๆ</p>
                 </div>
-                <div class="modal-footer">
-                    <button id="downloadPng" class="btn btn-primary">ดาวน์โหลด PNG</button>
-                    <button id="downloadJpg" class="btn btn-primary">ดาวน์โหลด JPG</button>
-                    <button id="downloadPdf" class="btn btn-primary">ดาวน์โหลด PDF</button>
+                <div class="flex items-center justify-center">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        บันทึกข้อมูลและสร้างเกียรติบัตร
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Search Section -->
+        <section id="search-section" class="bg-white shadow-md rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">ค้นหาเกียรติบัตร</h2>
+            <div class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="searchInput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="ค้นหาด้วยชื่อโรงเรียน หรือ ID เกียรติบัตร">
+                <div class="flex gap-4">
+                    <button id="searchButton" class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">ค้นหา</button>
+                    <button id="clearButton" class="w-full md:w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">ล้าง</button>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section">
+            <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Search results will be injected here -->
+            </div>
+            <p id="no-results" class="text-center text-gray-500 mt-8 hidden">ไม่พบข้อมูลที่ค้นหา</p>
+        </section>
+        
+        <!-- Submitted Schools Table -->
+        <section id="table-section" class="bg-white shadow-md rounded-lg p-6 mt-8">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">รายชื่อโรงเรียนที่จัดส่งล่าสุด</h2>
+            <div class="overflow-x-auto">
+                <table id="schoolsTable" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ลำดับ</th>
+                            <th>โรงเรียน</th>
+                            <th>คลิปวิดีโอที่จัดส่ง</th>
+                            <th>ดูเกียรติบัตรย้อนหลัง</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be injected here by DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
     </div>
 
-    <footer class="text-center py-3">
-        © 2025 สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2 | พัฒนาโดยทีม ICT สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2
+    <!-- Footer -->
+    <footer class="text-center p-4 mt-8 text-gray-600">
+        © 2025 Copyright | พัฒนาโดย ทีม ICT สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        AOS.init({
-            duration: 800,
-            once: true
-        });
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyr_UcvmtxYzldjZjfhOZWmlLxL93bwN8Lsq3WnPIJ62qsm-zjd7dVQRU38v_kgsy5xvw/exec";
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const resultsContainer = document.getElementById('results-container');
+        const noResultsMessage = document.getElementById('no-results');
+        const searchInput = document.getElementById('searchInput');
+        let allData = []; // Cache for all certificate data
 
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycby1v1Ug2l6axEvqmnnpsFff-9gvhPMNBialbPbzkLJ1yXdZ7IlsqeQV9MjLumx7OL2icA/exec';
-        let recentData = [];
-        const certWidth = 3508; // 300dpi A4 landscape width
-        const certHeight = 2481; // height
-        const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+        // --- Utility Functions ---
+        const showLoader = () => loadingOverlay.classList.remove('hidden');
+        const hideLoader = () => loadingOverlay.classList.add('hidden');
 
-        function getThaiDate(date) {
-            const d = new Date(date);
-            return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
-        }
-
-        async function loadRecentData() {
+        // --- Data Fetching ---
+        async function fetchData(query = '') {
+            showLoader();
             try {
-                const res = await fetch(`${scriptUrl}?action=getData`);
-                recentData = await res.json();
-                const tableData = recentData.map((item, idx) => [
-                    idx + 1,
-                    item.school,
-                    `<a href="${item.url}" target="_blank" class="btn btn-sm btn-outline-primary">ดูคลิป</a>`,
-                    `<button class="btn btn-sm btn-info" onclick="showCertificate(${idx})">ดู</button>`
-                ]);
-                $('#recentTable').DataTable({
-                    data: tableData,
-                    columns: [
-                        { title: 'ลำดับ' },
-                        { title: 'โรงเรียน' },
-                        { title: 'คลิปวิดีโอที่จัดส่ง' },
-                        { title: 'ดูเกียรติบัตรย้อนหลัง' }
-                    ],
-                    pageLength: 10,
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json'
-                    },
-                    order: []
+                const url = new URL(SCRIPT_URL);
+                if (query) {
+                    url.searchParams.append('action', 'search');
+                    url.searchParams.append('query', query);
+                } else {
+                    url.searchParams.append('action', 'read');
+                }
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+
+                if (result.success && Array.isArray(result.data)) {
+                    if (query === '') {
+                        allData = result.data; 
+                    }
+                    
+                    renderResults(result.data);
+                    if (!query) { 
+                        populateDataTable(result.data);
+                    }
+                } else {
+                    throw new Error(result.message || 'Received invalid data from the server.');
+                }
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถดึงข้อมูลได้ โปรดลองอีกครั้ง',
                 });
-            } catch (err) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้', 'error');
+                noResultsMessage.classList.remove('hidden');
+                resultsContainer.innerHTML = '';
+                if ($.fn.DataTable.isDataTable('#schoolsTable')) {
+                    $('#schoolsTable').DataTable().clear().draw();
+                }
+            } finally {
+                hideLoader();
             }
         }
 
-        loadRecentData();
+        // --- Rendering ---
+        function renderResults(data) {
+            resultsContainer.innerHTML = '';
+            if (data && data.length > 0) {
+                noResultsMessage.classList.add('hidden');
+                data.forEach(item => {
+                    const [id, schoolName, date, videoUrl, certificateUrl] = item;
+                    if (!id || !schoolName) return;
 
-        document.getElementById('submitForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = {
-                school: document.getElementById('school').value,
-                name: document.getElementById('name').value,
-                position: document.getElementById('position').value,
-                phone: document.getElementById('phone').value,
-                url: document.getElementById('url').value
-            };
-            try {
-                const res = await fetch(scriptUrl, {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
+                    const card = `
+                        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 flex flex-col">
+                            <div class="flex-grow">
+                                <h3 class="text-lg font-bold text-gray-800">${schoolName}</h3>
+                                <p class="text-gray-600 mt-2">ID: ${id}</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-4">
+                                <a href="${videoUrl}" target="_blank" class="w-full text-center bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors duration-300">
+                                    ดูคลิปวิดีโอ
+                                </a>
+                                <button 
+                                    class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-colors duration-300"
+                                    onclick="viewCertificate('${certificateUrl}', '${schoolName}')">
+                                    ดูเกียรติบัตร
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    resultsContainer.innerHTML += card;
                 });
-                const result = await res.json();
-                if (result.status === 'success') {
-                    Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success');
-                    $('#recentTable').DataTable().destroy();
-                    loadRecentData();
-                    generateCertificate(formData.school, new Date());
-                } else {
-                    throw new Error();
-                }
-            } catch (err) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้', 'error');
-            }
-        });
-
-        function showCertificate(index) {
-            const item = recentData[index];
-            generateCertificate(item.school, new Date(item.timestamp));
-        }
-
-        async function generateCertificate(school, date) {
-            document.getElementById('loading').style.display = 'block';
-            const canvas = document.getElementById('certCanvas');
-            canvas.width = certWidth;
-            canvas.height = certHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, certWidth, certHeight);
-
-            const flagImg = new Image();
-            flagImg.crossOrigin = 'anonymous';
-            flagImg.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Flag_of_Thailand.svg/1024px-Flag_of_Thailand.svg.png';
-
-            const logoTop = new Image();
-            logoTop.crossOrigin = 'anonymous';
-            logoTop.src = 'https://lh3.googleusercontent.com/d/1reqwwQP7acieFotjwOkM4qYIg9w1A3rf';
-
-            const logoBottom = new Image();
-            logoBottom.crossOrigin = 'anonymous';
-            logoBottom.src = 'https://lh3.googleusercontent.com/d/1N1qX5HosVt7ap2zWBw-RFm2oiD2oIwfC';
-
-            try {
-                await Promise.all([
-                    new Promise((resolve, reject) => {
-                        flagImg.onload = resolve;
-                        flagImg.onerror = reject;
-                    }),
-                    new Promise((resolve, reject) => {
-                        logoTop.onload = resolve;
-                        logoTop.onerror = reject;
-                    }),
-                    new Promise((resolve, reject) => {
-                        logoBottom.onload = resolve;
-                        logoBottom.onerror = reject;
-                    })
-                ]);
-
-                // ลายน้ำธงชาติไทย
-                ctx.globalAlpha = 0.1;
-                ctx.drawImage(flagImg, (certWidth - flagImg.width) / 2, (certHeight - flagImg.height) / 2, flagImg.width, flagImg.height);
-                ctx.globalAlpha = 1;
-
-                // กรอบสวยงาม (ธีมธงชาติ)
-                ctx.strokeStyle = '#c8102e'; // แดง
-                ctx.lineWidth = 30;
-                ctx.strokeRect(100, 100, certWidth - 200, certHeight - 200);
-                ctx.strokeStyle = '#ffffff'; // ขาว
-                ctx.lineWidth = 20;
-                ctx.strokeRect(130, 130, certWidth - 260, certHeight - 260);
-                ctx.strokeStyle = '#002654'; // น้ำเงิน
-                ctx.lineWidth = 10;
-                ctx.strokeRect(150, 150, certWidth - 300, certHeight - 300);
-
-                // โลโก้ด้านบน
-                const logoSize = 400;
-                ctx.drawImage(logoTop, (certWidth - logoSize) / 2, 200, logoSize, logoSize);
-
-                // เนื้อหา
-                ctx.fillStyle = '#000000';
-                ctx.textAlign = 'center';
-                let yPos = 800;
-                ctx.font = 'bold 80px Noto Sans Thai';
-                ctx.fillText('สำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2', certWidth / 2, yPos);
-                yPos += 100;
-                ctx.font = '60px Noto Sans Thai';
-                ctx.fillText('ขอมอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า', certWidth / 2, yPos);
-                yPos += 120;
-                ctx.font = 'bold 90px Noto Sans Thai';
-                ctx.fillText(school, certWidth / 2, yPos);
-                yPos += 120;
-                ctx.font = '60px Noto Sans Thai';
-                const contentText = 'ได้แสดงความจงรักภักดีต่อสถาบันหลักของชาติ ความสามัคคีเป็นหนึ่งเดียวของคนไทย และเป็นกำลังใจสำคัญแก่เหล่าทหารกล้า';
-                wrapText(ctx, contentText, certWidth / 2, yPos, certWidth - 400, 70);
-                yPos += 140;
-                ctx.fillText('ขออำนวยพรให้ประสบความสุข ความเจริญก้าวหน้าตลอดไป', certWidth / 2, yPos);
-                yPos += 100;
-                ctx.fillText(`ให้ไว้ ณ วันที่ ${getThaiDate(date)}`, certWidth / 2, yPos);
-
-                // โลโก้ด้านล่างและชื่อ
-                yPos = certHeight - 600;
-                ctx.drawImage(logoBottom, (certWidth - logoSize) / 2, yPos, logoSize, logoSize);
-                yPos += logoSize + 50;
-                ctx.font = '50px Noto Sans Thai';
-                ctx.fillText('(นายวันชัย หวังสวาสดิ์)', certWidth / 2, yPos);
-                yPos += 60;
-                ctx.fillText('ผู้อำนวยการสำนักงานเขตพื้นที่การศึกษาประถมศึกษาชลบุรี เขต 2', certWidth / 2, yPos);
-
-                document.getElementById('loading').style.display = 'none';
-
-                // แสดง modal
-                const modal = new bootstrap.Modal(document.getElementById('certModal'));
-                modal.show();
-
-                // ตรวจสอบว่าเกียรติบัตรพร้อมดาวน์โหลด
-                const filename = `${school}_เกียรติบัตร`;
-                document.getElementById('downloadPng').onclick = () => downloadBlob(canvas, filename, 'png');
-                document.getElementById('downloadJpg').onclick = () => downloadBlob(canvas, filename, 'jpg');
-                document.getElementById('downloadPdf').onclick = () => downloadPdf(canvas, filename);
-            } catch (err) {
-                document.getElementById('loading').style.display = 'none';
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างเกียรติบัตรได้ กรุณาลองใหม่', 'error');
+            } else {
+                noResultsMessage.classList.remove('hidden');
             }
         }
 
-        function wrapText(context, text, x, y, maxWidth, lineHeight) {
-            const words = text.split(' ');
-            let line = '';
-            for (let n = 0; n < words.length; n++) {
-                const testLine = line + words[n] + ' ';
-                const metrics = context.measureText(testLine);
-                if (metrics.width > maxWidth && n > 0) {
-                    context.fillText(line, x, y);
-                    line = words[n] + ' ';
-                    y += lineHeight;
-                } else {
-                    line = testLine;
+        function populateDataTable(data) {
+            if (!Array.isArray(data)) {
+                console.error("Data provided to populateDataTable is not an array:", data);
+                if ($.fn.DataTable.isDataTable('#schoolsTable')) {
+                    $('#schoolsTable').DataTable().clear().draw();
                 }
+                return;
             }
-            context.fillText(line, x, y);
-        }
 
-        function downloadBlob(canvas, filename, format) {
-            const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${filename}.${format}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                } else {
-                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ได้', 'error');
-                }
-            }, mime, 1.0);
-        }
-
-        function downloadPdf(canvas, filename) {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: [certWidth, certHeight],
-                hotfixes: ['px_scaling']
+            const tableData = data.map((item, index) => {
+                const [id, schoolName, date, videoUrl, certificateUrl] = item;
+                 return {
+                    'ลำดับ': data.length - index,
+                    'โรงเรียน': schoolName,
+                    'คลิปวิดีโอที่จัดส่ง': `<a href="${videoUrl}" target="_blank" class="text-blue-500 hover:underline">ดูคลิป</a>`,
+                    'ดูเกียรติบัตรย้อนหลัง': `<button onclick="viewCertificate('${certificateUrl}', '${schoolName}')" class="bg-teal-500 hover:bg-teal-700 text-white font-bold py-1 px-3 rounded text-sm">ดูเกียรติบัตร</button>`
+                };
             });
-            pdf.addImage(canvas.toDataURL('image/jpeg', 1.0), 'JPEG', 0, 0, certWidth, certHeight);
-            pdf.save(`${filename}.pdf`);
+
+            if ($.fn.DataTable.isDataTable('#schoolsTable')) {
+                $('#schoolsTable').DataTable().destroy();
+            }
+
+            $('#schoolsTable').DataTable({
+                data: tableData,
+                columns: [
+                    { data: 'ลำดับ' },
+                    { data: 'โรงเรียน' },
+                    { data: 'คลิปวิดีโอที่จัดส่ง' },
+                    { data: 'ดูเกียรติบัตรย้อนหลัง' }
+                ],
+                responsive: true,
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/th.json"
+                },
+                "pageLength": 10
+            });
         }
+
+
+        // --- Event Handlers ---
+        document.getElementById('certificate-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoader();
+
+            const schoolName = document.getElementById('schoolName').value;
+            const videoUrl = document.getElementById('videoUrl').value;
+
+            const params = new URLSearchParams();
+            params.append('action', 'create');
+            params.append('schoolName', schoolName);
+            params.append('videoUrl', videoUrl);
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: params
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'บันทึกสำเร็จ!',
+                        text: `เกียรติบัตรสำหรับ ${schoolName} ถูกสร้างเรียบร้อยแล้ว`,
+                    }).then(() => {
+                        document.getElementById('certificate-form').reset();
+                        fetchData(); // Refresh data
+                    });
+                } else {
+                    throw new Error(result.message || 'Unknown error occurred');
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: `ไม่สามารถบันทึกข้อมูลได้: ${error.message}`,
+                });
+            } finally {
+                hideLoader();
+            }
+        });
+
+        document.getElementById('searchButton').addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (query) {
+                fetchData(query);
+            } else {
+                renderResults(allData);
+            }
+        });
+
+        document.getElementById('clearButton').addEventListener('click', () => {
+            searchInput.value = '';
+            renderResults(allData); 
+            noResultsMessage.classList.add('hidden');
+        });
+        
+        searchInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('searchButton').click();
+            }
+        });
+
+
+        // --- Certificate Viewer ---
+        function viewCertificate(url, schoolName) {
+            if (!url || url === 'undefined') {
+                 Swal.fire('ข้อผิดพลาด', 'ไม่พบ URL ของเกียรติบัตร', 'error');
+                 return;
+            }
+            window.open(url, '_blank');
+
+            Swal.fire({
+                title: `เกียรติบัตร: ${schoolName}`,
+                html: `<iframe src="${url.replace("/view", "/preview")}" width="100%" height="500px" frameborder="0"></iframe>`,
+                width: '80%',
+                confirmButtonText: 'ปิด',
+            });
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+        });
     </script>
 </body>
 </html>
